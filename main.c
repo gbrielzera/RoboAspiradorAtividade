@@ -13,9 +13,22 @@ struct dimensoes {
     char **g;
 };
 
-int main() {
-    struct posicao posicao;
+void definirValores() {
+    struct dimensoes dimensoes;
+    printf("Digite o valor de N: ");
+    scanf("%d", &dimensoes.N);
+    printf("Digite o valor de M: ");
+    scanf("%d", &dimensoes.M);
+    printf("Digite o valor de T: ");
+    scanf("%d", &dimensoes.T);
+    printf("%d %d %d", dimensoes.N, dimensoes.M, dimensoes.T);
+}
 
-    
+int main() {
+    system("cls");
+    struct posicao posicao;
+    definirValores();
+
+
     return 0;
 }
