@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
+#include <windows.h>
 
 struct posicao {
     int r, c;
@@ -144,8 +146,6 @@ void definirValores(struct dimensoes *d, struct posicao *p) {
     d->inicial_sujeira = d->sujeira_total;
 
     fclose(f);
-
-    printf("Mapa carregado com sucesso!\n");
 }
 
 void imprimir_mapa(struct dimensoes *d, struct posicao *p) {
@@ -167,15 +167,21 @@ void imprimir_mapa(struct dimensoes *d, struct posicao *p) {
 
 int main() {
 
+    LARGE_INTEGER inicio, fim, frequencia;
+
+    QueryPerformanceFrequency(&frequencia);
+    
+    
     struct dimensoes d;
     struct posicao p;
     int modo_passo;
-
+    
     definirValores(&d, &p);
-
+    
     printf("Deseja modo passo-a-passo? (1=sim, 0=nao): ");
     scanf("%d", &modo_passo);
     getchar();
+    QueryPerformanceCounter(&inicio);
 
     int t;
 
@@ -217,6 +223,13 @@ int main() {
 
     free(d.g);
     free(d.visitado);
+
+    QueryPerformanceCounter(&fim);
+
+    double tempo_ms = (double)(fim.QuadPart - inicio.QuadPart) * 1000.0 / frequencia.QuadPart;
+
+    printf("Tempo de execucao: %.3f ms\n", tempo_ms);
+
 
     return 0;
 }
