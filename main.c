@@ -3,14 +3,20 @@
 #include <time.h>
 #include <windows.h>
 
+// structs funcionam como fichas que agrupam informações
+
+// guarda apenas a linha (r) e a coluna (c) onde o robô está no momento
 struct posicao {
     int r, c;
 };
 
+
+// cria uma lista de comandos que o robô pode entender, como LIMPAR, mover para o Norte, Sul, Leste, Oeste ou FICAR parado
 enum acoes {
     LIMPAR, MOVER_N, MOVER_S, MOVER_L, MOVER_O, FICAR
 };
 
+// é tipo o processador do robô, guarda o tamanho do mapa (n x m), o limite de tempo (T), a quantidade de sujeira, o desenho do mapa (g) e o histórico de onde o robô já passou (visitado)
 struct dimensoes {
     int N, M, T, sujeira_total;
     int limpezas, bloqueios, inicial_sujeira;
@@ -18,12 +24,21 @@ struct dimensoes {
     int **visitado;
 };
 
+
+// antes do robô dar um passo, ele precisa saber se o caminho está livre, essa função verifica duas coisas:
+// se a posição está dentro dos limites do mapa para não bater na borda
+// se a posição não é uma parede (#).
 int pode_mover(struct dimensoes *d, int r, int c) {
     if (r < 0 || r >= d->N || c < 0 || c >= d->M) return 0;
     if (d->g[r][c] == '#') return 0;
     return 1;
 }
 
+
+// inteligência do robô: este é o bloco que decide o que fazer a cada turno:
+// prioridade 1: se onde ele está agora tem sujeira (*), a ação é LIMPAR
+// prioridade 2: Se houver sujeira em qualquer um dos quatro quadrados vizinhos, ele se move para lá imediatamente
+// prioridade 3 (exploração): Se não houver sujeira por perto, ele olha para os vizinhos e escolhe o caminho que ele visitou menos vezes (o menor valor na matriz visitado) garantindo que ele explore áreas novas
 enum acoes decide_reflex(struct dimensoes *d, struct posicao *p) {
 
     if (d->g[p->r][p->c] == '*')
@@ -55,6 +70,10 @@ enum acoes decide_reflex(struct dimensoes *d, struct posicao *p) {
     return melhor;
 }
 
+
+// execução da ação: após decidir o que fazer, esta função altera o estado do mundo: 
+// se for limpar, ele troca o * por . (limpo) e diminui o contador de sujeira total
+// se for se mover, ele atualiza a posição do robô e soma +1 na matriz de visitado para marcar que passou por ali
 void aplicar_acao(struct dimensoes *d, struct posicao *p, enum acoes acao) {
 
     if (acao == LIMPAR) {
@@ -87,6 +106,11 @@ void aplicar_acao(struct dimensoes *d, struct posicao *p, enum acoes acao) {
     }
 }
 
+
+// carregamento do mapa: essa função lê arquivos de texto
+// ela lê o tamanho do mapa e o tempo disponível
+// ela reserva espaço na memória do computador para o mapa com o malloc
+// ela identifica onde o robô começa (S) e conta quanta sujeira existe no total para saber quando o trabalho vai terminar
 void definirValores(struct dimensoes *d, struct posicao *p) {
 
     char nome_arquivo[100];
@@ -167,17 +191,19 @@ void imprimir_mapa(struct dimensoes *d, struct posicao *p) {
 
 int main() {
 
+    // variáveis para contar o tempo de execução do programa
     LARGE_INTEGER inicio, fim, frequencia;
 
     QueryPerformanceFrequency(&frequencia);
     
-    
+    // reserva memória para a "ficha" do robô e para o "mundo" dele
     struct dimensoes d;
     struct posicao p;
     int modo_passo;
     
     definirValores(&d, &p);
     
+    //se sim, o programa vai limpar a tela e mostrar o mapa a cada movimento do robô, com o enter para continuar
     printf("Deseja modo passo-a-passo? (1=sim, 0=nao): ");
     scanf("%d", &modo_passo);
     getchar();
@@ -185,7 +211,16 @@ int main() {
 
     int t;
 
+    // esse é o coração do programa. 
+    // o robô entra num loop que se repete enquanto duas condições forem verdadeiras:
+    // tempo: se o tempo atual t for menor que o limite T definido no mapa
+    // sujeira: se ainda houver sujeira no mapa (sujeira_total > 0)
     for (t = 0; t < d.T && d.sujeira_total > 0; t++) {
+    // dentro deste loop, acontecem três coisas:
+    // visualização: se o modo passo-a-passo estiver ligado, ele imprime o mapa e as estatísticas atuais como passos dados e sujeira restante
+    // decisão: chama a função decide_reflex, onde o robô analisa os arredores e decide qual a melhor ação
+    // ação: chama a função aplicar_acao para efetivamente mudar a posição do robô ou remover a sujeira do mapa
+
 
         if (modo_passo) {
 
